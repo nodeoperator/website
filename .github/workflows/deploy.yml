@@ -28,7 +28,7 @@ jobs:
        with:
          role-to-assume: "${{ secrets.AWS_ROLE_ARN }}"
          role-session-name: arrow-website-pull-docs
-         aws-region: "us-east-2"
+         aws-region: "us-east-1"
      - name: Deploy to ${{ inputs.environment }} S3
        id: sync_s3
        run: |
