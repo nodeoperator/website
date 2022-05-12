@@ -1,0 +1,27 @@
+name: Deploy Production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  production:
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: production
+    secrets: inherit
+    permissions:
+      id-token: write
+      contents: read
+
+  invalidate-cloudfront:
+    needs: [production]
+    uses: ./.github/workflows/invalidate-cloudfront.yml
+    with:
+      paths: "/*"
+      environment: production
+    secrets: inherit
+    permissions:
+      id-token: write
+      contents: read

@@ -1,0 +1,40 @@
+name: Deploy website to S3
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+        description: "Environment to deploy to"
+    outputs:
+      files_changed:
+        description: "Amount of files uploaded to / deleted from S3 during sync"
+        value: "${{ jobs.build.outputs.files_changed }}"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: ${{ inputs.environment }}
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+     - name: Checkout
+       uses: actions/checkout@v2
+     - name: Configure AWS Credentials
+       uses: aws-actions/configure-aws-credentials@v1
+       with:
+         role-to-assume: "${{ secrets.AWS_ROLE_ARN }}"
+         role-session-name: arrow-website-pull-docs
+         aws-region: "us-east-2"
+     - name: Deploy to ${{ inputs.environment }} S3
+       id: sync_s3
+       run: |
+         FILES_CHANGED=$(aws s3 sync ./ "s3://${{ secrets.AWS_S3_BUCKET }}/" --delete --size-only | wc -l)
+         echo "::set-output name=files_changed::$FILES_CHANGED"
+         echo '::echo::on'
+         echo "Files changed: $FILES_CHANGED"
+    outputs:
+      files_changed: "${{ steps.build-and-deploy.outputs.files_changed }}"
